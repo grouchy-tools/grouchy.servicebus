@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net451;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <Product>Grouchy.ServiceBus.RabbitMQ</Product>
     <Title>Grouchy.ServiceBus.RabbitMQ</Title>
     <Authors>Andrew Craven</Authors>

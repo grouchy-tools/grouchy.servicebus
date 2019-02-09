@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFrameworks>net451;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <Product>Grouchy.ServiceBus.InMemory</Product>
     <Title>Grouchy.ServiceBus.InMemory</Title>
     <Authors>Andrew Craven</Authors>

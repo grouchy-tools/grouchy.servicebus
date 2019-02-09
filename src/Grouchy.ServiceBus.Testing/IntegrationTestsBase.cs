@@ -10,6 +10,10 @@ namespace Grouchy.ServiceBus.Testing
    {
       protected abstract Task<IServiceBus> CreateServiceBus();
       
+      // TODO:
+      // publish before subscribe
+      // subscribe before publish
+      
       [Test]
       public async Task multiple_messages_are_all_sent_and_received_in_same_bus()
       {

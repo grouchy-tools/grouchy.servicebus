@@ -29,14 +29,14 @@ task Build {
    if ($VersionSuffix -eq $null -or $VersionSuffix -eq "") {
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
-      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net451 --no-incremental }
-      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net451 --no-incremental }
+      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental }
+      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental }
    }
    else {
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
-      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net451 --no-incremental --version-suffix $VersionSuffix }
-      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net451 --no-incremental --version-suffix $VersionSuffix }
+      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental --version-suffix $VersionSuffix }
+      exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental --version-suffix $VersionSuffix }
    }
 }
 
@@ -45,8 +45,8 @@ task Test -depends Build {
    exec { dotnet restore $RabbitMQTestProjectPath }
    exec { dotnet test $InMemoryTestProjectPath -c $Configuration -f netcoreapp2.0 --filter Category!=local-only }
    exec { dotnet test $InMemoryTestProjectPath -c $Configuration -f netcoreapp2.0 --filter Category!=local-only }
-   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f net451 --filter Category!=local-only }
-   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f net451 --filter Category!=local-only }
+   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f net461 --filter Category!=local-only }
+   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f net461 --filter Category!=local-only }
 }
 
 task Package -depends Build {

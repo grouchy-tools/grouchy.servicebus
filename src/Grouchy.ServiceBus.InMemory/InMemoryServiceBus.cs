@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using Grouchy.ServiceBus.Abstractions;
@@ -8,17 +6,17 @@ namespace Grouchy.ServiceBus.InMemory
 {
    public class InMemoryServiceBus : IServiceBus
    {
-      private readonly ConcurrentDictionary<Type, BlockingCollection<object>> _queues;
+      private readonly InMemoryServiceBusQueues _queues;
 
-      public InMemoryServiceBus()
+      public InMemoryServiceBus(InMemoryServiceBusQueues queues)
       {
-         _queues = new ConcurrentDictionary<Type, BlockingCollection<object>>();
+         _queues = queues;
       }
 
       public Task Publish<TMessage>(TMessage message)
          where TMessage : class
       {
-         _queues.TryGetValue(message.GetType(), out var queue);
+         var queue = _queues.GetQueue<TMessage>();
 
          queue?.Add(message);
 
@@ -29,9 +27,7 @@ namespace Grouchy.ServiceBus.InMemory
          where TMessage : class
          where TMessageHandler : class, IMessageHandler<TMessage>
       {
-         var queue = _queues.GetOrAdd(
-            typeof(TMessage),
-            _ => new BlockingCollection<object>());
+         var queue = _queues.GetQueue<TMessage>(true);
 
          Task.Run(async () =>
          {
