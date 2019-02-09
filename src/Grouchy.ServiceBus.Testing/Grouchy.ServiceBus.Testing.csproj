@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0001" />
+    <PackageReference Include="nunit" Version="3.10.1" />
+  </ItemGroup>
+</Project>

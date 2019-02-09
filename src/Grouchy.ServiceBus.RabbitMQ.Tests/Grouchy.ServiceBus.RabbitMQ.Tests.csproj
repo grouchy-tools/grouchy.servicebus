@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net451;netcoreapp2.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Grouchy.ServiceBus.RabbitMQ.Tests</RootNamespace>
+    <AssemblyName>Grouchy.ServiceBus.RabbitMQ.Tests</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="nunit" Version="3.10.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Grouchy.ServiceBus.RabbitMQ\Grouchy.ServiceBus.RabbitMQ.csproj" />
+    <ProjectReference Include="..\Grouchy.ServiceBus.Testing\Grouchy.ServiceBus.Testing.csproj" />
+  </ItemGroup>
+</Project>
