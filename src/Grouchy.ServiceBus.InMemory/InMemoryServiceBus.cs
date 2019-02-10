@@ -6,9 +6,9 @@ namespace Grouchy.ServiceBus.InMemory
 {
    public class InMemoryServiceBus : IServiceBus
    {
-      private readonly InMemoryServiceBusQueues _queues;
+      private readonly ConcurrentMessageQueues _queues;
 
-      public InMemoryServiceBus(InMemoryServiceBusQueues queues)
+      public InMemoryServiceBus(ConcurrentMessageQueues queues)
       {
          _queues = queues;
       }
@@ -35,7 +35,7 @@ namespace Grouchy.ServiceBus.InMemory
             
             while (!cancellationToken.IsCancellationRequested)
             {
-               var message = (TMessage)queue.Take(cancellationToken);
+               var message = queue.Take(cancellationToken);
 
                await messageHandler.Handle(message);
             }

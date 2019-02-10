@@ -8,12 +8,12 @@ namespace Grouchy.ServiceBus.InMemory.Tests
     [TestFixture]
     public class IntegrationTests : IntegrationTestsBase
     {
-        private InMemoryServiceBusQueues _queues;
+        private ConcurrentMessageQueues _queues;
 
         [SetUp]
         public void setup_before_each_test()
         {
-            _queues = new InMemoryServiceBusQueues();
+            _queues = new ConcurrentMessageQueues();
         }
         
         protected override Task<IServiceBus> CreateServiceBus()
