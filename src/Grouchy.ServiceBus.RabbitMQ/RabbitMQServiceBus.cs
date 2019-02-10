@@ -65,7 +65,10 @@ namespace Grouchy.ServiceBus.RabbitMQ
 
                 await messageHandler.Handle(message);
             };
-            
+
+            // TODO: Only declare if not already done so
+            channel.QueueDeclare(queueName, true, false, false, null);
+
             channel.BasicConsume(queueName, true, consumer);
             
             // TODO: Add disposable subscription
