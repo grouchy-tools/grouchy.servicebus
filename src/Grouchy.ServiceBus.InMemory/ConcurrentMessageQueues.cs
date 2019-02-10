@@ -12,19 +12,10 @@ namespace Grouchy.ServiceBus.InMemory
          _queues = new ConcurrentDictionary<Type, object>();
       }
 
-      public BlockingCollection<TMessage> GetQueue<TMessage>(bool create = false)
+      public BlockingCollection<TMessage> GetQueue<TMessage>()
          where TMessage : class
       {
-         object queue;
-         
-         if (create)
-         {
-            queue = _queues.GetOrAdd(typeof(TMessage), _ => new BlockingCollection<TMessage>());
-         }
-         else
-         {
-            _queues.TryGetValue(typeof(TMessage), out queue);
-         }
+         var queue = _queues.GetOrAdd(typeof(TMessage), _ => new BlockingCollection<TMessage>());
 
          return (BlockingCollection<TMessage>)queue;
       }

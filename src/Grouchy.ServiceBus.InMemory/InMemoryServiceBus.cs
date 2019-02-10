@@ -18,7 +18,7 @@ namespace Grouchy.ServiceBus.InMemory
       {
          var queue = _queues.GetQueue<TMessage>();
 
-         queue?.Add(message);
+         queue.Add(message);
 
          return Task.CompletedTask;
       }
@@ -27,22 +27,22 @@ namespace Grouchy.ServiceBus.InMemory
          where TMessage : class
          where TMessageHandler : class, IMessageHandler<TMessage>
       {
-         var queue = _queues.GetQueue<TMessage>(true);
+         var queue = _queues.GetQueue<TMessage>();
+
+         var cancellationTokenSource = new CancellationTokenSource();
+         var cancellationToken = cancellationTokenSource.Token;
 
          Task.Run(async () =>
-         {
-            var cancellationToken = new CancellationToken();
-            
+         {            
             while (!cancellationToken.IsCancellationRequested)
             {
                var message = queue.Take(cancellationToken);
 
                await messageHandler.Handle(message);
             }
-         });
+         }, cancellationToken);
 
-         // TODO: Add disposable subscription
-         return null;
+         return new InMemoryMessageSubscription(cancellationTokenSource);
       }
 
       // TODO: Tidy up

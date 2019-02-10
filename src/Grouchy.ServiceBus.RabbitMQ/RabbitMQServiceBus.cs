@@ -53,26 +53,14 @@ namespace Grouchy.ServiceBus.RabbitMQ
             //var queueName = this.queueNameConvention.GetQueueName(messageType);
             var queueName = messageType.Name.ToLower();
 
-            //TODO:
             var channel = _connection.CreateModel();
-            var consumer = new AsyncEventingBasicConsumer(channel);
-
-            // TODO: Create implementation of IAsyncBasicConsumer which contains channel and supports IDisposable 
-            consumer.Received += async (sender, args) =>
-            {
-                var serialisedMessage = Encoding.UTF8.GetString(args.Body);
-                var message = Deserialise<TMessage>(serialisedMessage);
-
-                await messageHandler.Handle(message);
-            };
-
+            var consumerSubscription = new RabbitMQMessageSubscription<TMessage, TMessageHandler>(channel, messageHandler);
+            
             // TODO: Only declare if not already done so
             channel.QueueDeclare(queueName, true, false, false, null);
+            channel.BasicConsume(queueName, true, consumerSubscription);
 
-            channel.BasicConsume(queueName, true, consumer);
-            
-            // TODO: Add disposable subscription
-            return null;
+            return consumerSubscription;
         }
 
         private string Serialise<TMessage>(TMessage message)
@@ -80,11 +68,6 @@ namespace Grouchy.ServiceBus.RabbitMQ
             return JsonConvert.SerializeObject(message);
         }
         
-        private TMessage Deserialise<TMessage>(string serialisedMessage)
-        {
-            return JsonConvert.DeserializeObject<TMessage>(serialisedMessage);
-        }
-
         // TODO: Tidy up
         public void Dispose()
         {
