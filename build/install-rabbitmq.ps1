@@ -16,7 +16,8 @@ Write-Host "Starting service..."
 Start-Process -Wait "$rabbitPath\sbin\rabbitmq-service.bat" "start"
 
 Write-Host "Waiting for service availability..."
-Start-Sleep -s 30 # Could wait for management UI if plugin was available
+# TODO: Could investigate lower values here, 10 is not long enough
+Start-Sleep -s 30 # Could wait for management UI if plugin was available.
 
 Get-Service "RabbitMQ"
 
