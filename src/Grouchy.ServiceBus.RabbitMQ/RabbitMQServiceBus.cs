@@ -1,77 +1,69 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using System.Text;
-using Newtonsoft.Json;
 using global::RabbitMQ.Client;
-using global::RabbitMQ.Client.Events;
 using Grouchy.ServiceBus.Abstractions;
 
 namespace Grouchy.ServiceBus.RabbitMQ
 {
-    public class RabbitMQServiceBus : IServiceBus
-    {
-        private readonly IConnection _connection;
-        private readonly ThreadLocal<IModel> _channel;
+   public class RabbitMQServiceBus : IServiceBus
+   {
+      private readonly IQueueNameStrategy _queueNameStrategy;
+      private readonly ISerialisationStrategy _serialisationStrategy;
+      private readonly IConnection _connection;
+      private readonly ThreadLocal<IModel> _channel;
 
-        public RabbitMQServiceBus()
-        {
-            // TODO: Configuration
-            var factory = new ConnectionFactory { HostName = "localhost", DispatchConsumersAsync = true };
+      public RabbitMQServiceBus(
+         IQueueNameStrategy queueNameStrategy,
+         ISerialisationStrategy serialisationStrategy)
+      {
+         _queueNameStrategy = queueNameStrategy;
+         _serialisationStrategy = serialisationStrategy;
 
-            _connection = factory.CreateConnection();
-            _channel = new ThreadLocal<IModel>(_connection.CreateModel);
-        }
-        
-        public Task Publish<TMessage>(TMessage message)
-            where TMessage : class
-        {
-            var messageType = message.GetType();
-            // TODO:
-            //var queueName = this.queueNameConvention.GetQueueName(messageType);
-            var queueName = messageType.Name.ToLower();
+         // TODO: Configuration
+         var factory = new ConnectionFactory {HostName = "localhost", DispatchConsumersAsync = true};
 
-            // TODO: Only declare if not already done so
-            _channel.Value.QueueDeclare(queueName, true, false, false, null);
-            
-            var serialisedMessage = Serialise(message);
-            var body = Encoding.UTF8.GetBytes(serialisedMessage);
-            
-            var properties = _channel.Value.CreateBasicProperties();
-            properties.Persistent = true;
+         _connection = factory.CreateConnection();
+         _channel = new ThreadLocal<IModel>(_connection.CreateModel);
+      }
 
-            _channel.Value.BasicPublish(string.Empty, queueName, properties, body);
+      public Task Publish<TMessage>(TMessage message)
+         where TMessage : class
+      {
+         var queueName = _queueNameStrategy.GetQueueName(message.GetType());
 
-            return Task.CompletedTask;
-        }
+         // TODO: Only declare if not already done so
+         _channel.Value.QueueDeclare(queueName, true, false, false, null);
 
-        public IMessageSubscription Subscribe<TMessage, TMessageHandler>(TMessageHandler messageHandler)
-            where TMessage : class
-            where TMessageHandler : class, IMessageHandler<TMessage>
-        {
-            var messageType = typeof(TMessage);
-            // TODO:
-            //var queueName = this.queueNameConvention.GetQueueName(messageType);
-            var queueName = messageType.Name.ToLower();
+         var properties = _channel.Value.CreateBasicProperties();
+         properties.Persistent = true;
 
-            var channel = _connection.CreateModel();
-            var consumerSubscription = new RabbitMQMessageSubscription<TMessage, TMessageHandler>(channel, messageHandler);
-            
-            // TODO: Only declare if not already done so
-            channel.QueueDeclare(queueName, true, false, false, null);
-            channel.BasicConsume(queueName, true, consumerSubscription);
+         var body = _serialisationStrategy.Serialise(message);
 
-            return consumerSubscription;
-        }
+         _channel.Value.BasicPublish(string.Empty, queueName, properties, body);
 
-        private string Serialise<TMessage>(TMessage message)
-        {
-            return JsonConvert.SerializeObject(message);
-        }
-        
-        // TODO: Tidy up
-        public void Dispose()
-        {
-            _connection?.Close();
-        }
-    }
+         return Task.CompletedTask;
+      }
+
+      public IMessageSubscription Subscribe<TMessage, TMessageHandler>(TMessageHandler messageHandler)
+         where TMessage : class
+         where TMessageHandler : class, IMessageHandler<TMessage>
+      {
+         var queueName = _queueNameStrategy.GetQueueName(typeof(TMessage));
+
+         var channel = _connection.CreateModel();
+         var consumerSubscription = new RabbitMQMessageSubscription<TMessage, TMessageHandler>(channel, _serialisationStrategy, messageHandler);
+
+         // TODO: Only declare if not already done so
+         channel.QueueDeclare(queueName, true, false, false, null);
+         channel.BasicConsume(queueName, true, consumerSubscription);
+
+         return consumerSubscription;
+      }
+
+      // TODO: Tidy up
+      public void Dispose()
+      {
+         _connection?.Close();
+      }
+   }
 }

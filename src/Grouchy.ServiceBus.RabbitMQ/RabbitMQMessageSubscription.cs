@@ -1,8 +1,6 @@
 using System;
-using System.Text;
 using System.Threading.Tasks;
 using global::RabbitMQ.Client;
-using Newtonsoft.Json;
 using Grouchy.ServiceBus.Abstractions;
 
 namespace Grouchy.ServiceBus.RabbitMQ
@@ -12,16 +10,19 @@ namespace Grouchy.ServiceBus.RabbitMQ
       where TMessageHandler : class, IMessageHandler<TMessage>
    {
       private readonly IModel _channel;
+      private readonly ISerialisationStrategy _serialisationStrategy;
       private readonly TMessageHandler _messageHandler;
 
       private bool _disposed = false;
       
       public RabbitMQMessageSubscription(
          IModel channel,
+         ISerialisationStrategy serialisationStrategy,
          TMessageHandler messageHandler)
          : base(channel)
       {
          _channel = channel;
+         _serialisationStrategy = serialisationStrategy;
          _messageHandler = messageHandler;
       }
 
@@ -30,7 +31,7 @@ namespace Grouchy.ServiceBus.RabbitMQ
          Dispose(false);         
       }
 
-      // TODO: Error handling, retry etc.
+      // TODO: Error handling, retry, ack etc.
       public override async Task HandleBasicDeliver(
          string consumerTag,
          ulong deliveryTag,
@@ -42,8 +43,7 @@ namespace Grouchy.ServiceBus.RabbitMQ
       {
          await base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body).ConfigureAwait(false);
 
-         var serialisedMessage = Encoding.UTF8.GetString(body);
-         var message = Deserialise(serialisedMessage);
+         var message = _serialisationStrategy.Deserialise<TMessage>(body);
 
          await _messageHandler.Handle(message);
       }
@@ -64,11 +64,6 @@ namespace Grouchy.ServiceBus.RabbitMQ
          }
 
          _disposed = true;
-      }
-      
-      private TMessage Deserialise(string serialisedMessage)
-      {
-         return JsonConvert.DeserializeObject<TMessage>(serialisedMessage);
       }
    }
 }

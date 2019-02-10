@@ -71,11 +71,11 @@ namespace Grouchy.ServiceBus.Testing
             
             await serviceBus.Publish(new TestMessage {Id = id});
 
-            await Task.Delay(100);
+            await Task.Delay(50);
             
             serviceBus.Subscribe<TestMessage, NullMessageHandler>(new NullMessageHandler());
 
-            await Task.Delay(100);
+            await Task.Delay(50);
          }
          
          Assert.That(sequences.Count, Is.EqualTo(0));
@@ -128,10 +128,10 @@ namespace Grouchy.ServiceBus.Testing
       
       private static async Task WaitForSubscribers(IReadOnlyCollection<TestMessage> messages, int expectedCount)
       {
-         var j = 0;
-         while (j < 10 && messages.Count < expectedCount)
+         var j = 2;
+         while (j < 20 && messages.Count < expectedCount)
          {
-            await Task.Delay(200);
+            await Task.Delay(j * j);
             j++;
          }
       }
