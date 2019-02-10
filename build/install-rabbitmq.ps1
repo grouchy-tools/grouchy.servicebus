@@ -15,6 +15,9 @@ Start-Process -Wait "$rabbitPath\sbin\rabbitmq-service.bat" "install"
 Write-Host "Starting service..."
 Start-Process -Wait "$rabbitPath\sbin\rabbitmq-service.bat" "start"
 
+Write-Host "Waiting for service availability..."
+Start-Sleep 10 # Could wait for management UI if plugin was available
+
 Get-Service "RabbitMQ"
 
 Write-Host "RabbitMQ installed and started" -ForegroundColor Green
