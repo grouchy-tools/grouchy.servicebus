@@ -1,8 +1,8 @@
-using NUnit.Framework;
-using Grouchy.ServiceBus.Abstractions;
-
 namespace Grouchy.ServiceBus.RabbitMQ.Tests
 {
+   using NUnit.Framework;
+   using Grouchy.ServiceBus.Abstractions;
+
    public class DefaultQueueNameStrategyTests
    {
       [Test]

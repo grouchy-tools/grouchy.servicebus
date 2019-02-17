@@ -1,10 +1,10 @@
-using System;
-using System.Text;
-using FluentAssertions;
-using NUnit.Framework;
-
 namespace Grouchy.ServiceBus.RabbitMQ.Tests
 {
+   using System;
+   using System.Text;
+   using FluentAssertions;
+   using NUnit.Framework;
+
    public class DefaultSerialisationStrategyTests
    {
       [Test]

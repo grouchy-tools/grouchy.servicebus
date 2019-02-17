@@ -1,9 +1,9 @@
-using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-
 namespace Grouchy.ServiceBus.RabbitMQ
 {
+   using System.Text;
+   using Newtonsoft.Json;
+   using Newtonsoft.Json.Serialization;
+
    public class DefaultSerialisationStrategy : ISerialisationStrategy
    {
       private readonly JsonSerializerSettings _serialiserSettings;

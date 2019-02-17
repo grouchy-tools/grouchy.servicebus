@@ -1,9 +1,9 @@
-using System;
-using System.Threading;
-using Grouchy.ServiceBus.Abstractions;
-
 namespace Grouchy.ServiceBus.InMemory
 {
+   using System;
+   using System.Threading;
+   using Grouchy.ServiceBus.Abstractions;
+
    public class InMemoryMessageSubscription : IMessageSubscription
    {
       private readonly CancellationTokenSource _cancellationTokenSource;

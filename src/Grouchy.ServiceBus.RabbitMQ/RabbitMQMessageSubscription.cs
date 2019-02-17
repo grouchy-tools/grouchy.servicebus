@@ -1,29 +1,30 @@
-using System;
-using System.Threading.Tasks;
-using global::RabbitMQ.Client;
-using Grouchy.ServiceBus.Abstractions;
-
 namespace Grouchy.ServiceBus.RabbitMQ
 {
-   public class RabbitMQMessageSubscription<TMessage, TMessageHandler> : AsyncDefaultBasicConsumer, IMessageSubscription
+   using System;
+   using global::RabbitMQ.Client;
+   using Grouchy.ServiceBus.Abstractions;
+
+   public class RabbitMQMessageSubscription<TMessage> : DefaultBasicConsumer, IMessageSubscription
       where TMessage : class
-      where TMessageHandler : class, IMessageHandler<TMessage>
    {
       private readonly IModel _channel;
+      private readonly IJobQueue _jobQueue;
+      private readonly Func<TMessage, IJob> _jobFactory;
       private readonly ISerialisationStrategy _serialisationStrategy;
-      private readonly TMessageHandler _messageHandler;
 
-      private bool _disposed = false;
+      private bool _disposed;
       
       public RabbitMQMessageSubscription(
          IModel channel,
-         ISerialisationStrategy serialisationStrategy,
-         TMessageHandler messageHandler)
+         IJobQueue jobQueue,
+         Func<TMessage, IJob> jobFactory,
+         ISerialisationStrategy serialisationStrategy)
          : base(channel)
       {
          _channel = channel;
+         _jobQueue = jobQueue;
+         _jobFactory = jobFactory;
          _serialisationStrategy = serialisationStrategy;
-         _messageHandler = messageHandler;
       }
 
       ~RabbitMQMessageSubscription()
@@ -32,7 +33,7 @@ namespace Grouchy.ServiceBus.RabbitMQ
       }
 
       // TODO: Error handling, retry, ack etc.
-      public override async Task HandleBasicDeliver(
+      public override void HandleBasicDeliver(
          string consumerTag,
          ulong deliveryTag,
          bool redelivered,
@@ -41,11 +42,11 @@ namespace Grouchy.ServiceBus.RabbitMQ
          IBasicProperties properties,
          byte[] body)
       {
-         await base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body).ConfigureAwait(false);
+         base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body);
 
          var message = _serialisationStrategy.Deserialise<TMessage>(body);
 
-         await _messageHandler.Handle(message);
+         _jobQueue.Enqueue(_jobFactory(message));
       }
 
       public void Dispose()

@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using System.Linq;
-using NUnit.Framework;
-using Grouchy.ServiceBus.Abstractions;
-
-namespace Grouchy.ServiceBus.Testing
+﻿namespace Grouchy.ServiceBus.Testing
 {
+   using System;
+   using System.Collections.Generic;
+   using System.Collections.Concurrent;
+   using System.Diagnostics;
+   using System.Threading.Tasks;
+   using System.Linq;
+   using NUnit.Framework;
+   using Grouchy.ServiceBus.Abstractions;
+   using Grouchy.ServiceBus.Testing.Handlers;
+   using Grouchy.ServiceBus.Testing.Messages;
+
    public abstract class IntegrationTestsBase
    {
       protected abstract Task<IServiceBus> CreateServiceBus();
@@ -16,6 +19,7 @@ namespace Grouchy.ServiceBus.Testing
       // TODO: Send vs Publish
       // TODO: Subscribe overload without argument
       // TODO: Handling unroutable messages https://www.rabbitmq.com/dotnet-api-guide.html
+      // TODO: manual ack/nack
       
       [Test]
       public async Task publish_before_subscribe()
@@ -29,7 +33,7 @@ namespace Grouchy.ServiceBus.Testing
          {
             await serviceBus.Publish(new TestMessage {Id = id});
             
-            serviceBus.Subscribe<TestMessage, TestMessageHandler>(messageHandler);
+            serviceBus.Subscribe<TestMessage>(messageHandler);
             
             await WaitForSubscribers(sequences, 1);
          }
@@ -48,7 +52,7 @@ namespace Grouchy.ServiceBus.Testing
 
          using (var serviceBus = await CreateServiceBus())
          {
-            serviceBus.Subscribe<TestMessage, TestMessageHandler>(messageHandler);
+            serviceBus.Subscribe<TestMessage>(messageHandler);
             
             await serviceBus.Publish(new TestMessage {Id = id});
             
@@ -69,14 +73,14 @@ namespace Grouchy.ServiceBus.Testing
 
          using (var serviceBus = await CreateServiceBus())
          {
-            var subscription = serviceBus.Subscribe<TestMessage, TestMessageHandler>(messageHandler);
+            var subscription = serviceBus.Subscribe<TestMessage>(messageHandler);
             subscription.Dispose();
             
             await serviceBus.Publish(new TestMessage {Id = id});
 
             await Task.Delay(50);
             
-            serviceBus.Subscribe<TestMessage, NullMessageHandler>(new NullMessageHandler());
+            serviceBus.Subscribe<TestMessage>(new NullMessageHandler());
 
             await Task.Delay(50);
          }
@@ -94,7 +98,7 @@ namespace Grouchy.ServiceBus.Testing
 
          using (var serviceBus = await CreateServiceBus())
          {
-            serviceBus.Subscribe<TestMessage, TestMessageHandler>(messageHandler);
+            serviceBus.Subscribe<TestMessage>(messageHandler);
 
             var publishTasks = Enumerable.Range(0, messages).Select(i => serviceBus.Publish(new TestMessage {Sequence = i}));
             await Task.WhenAll(publishTasks);
@@ -117,7 +121,7 @@ namespace Grouchy.ServiceBus.Testing
          using (var sendServiceBus = await CreateServiceBus())
          using (var receiveServiceBus = await CreateServiceBus())
          {
-            receiveServiceBus.Subscribe<TestMessage, TestMessageHandler>(messageHandler);
+            receiveServiceBus.Subscribe<TestMessage>(messageHandler);
 
             var publishTasks = Enumerable.Range(0, messages).Select(i => sendServiceBus.Publish(new TestMessage {Sequence = i}));
             await Task.WhenAll(publishTasks);
@@ -128,46 +132,42 @@ namespace Grouchy.ServiceBus.Testing
          Assert.That(sequences.Count, Is.EqualTo(messages));
          Assert.That(sequences.Select(c => c.Sequence).Distinct().Count, Is.EqualTo(messages));
       }
+
+      [Test]
+      public async Task messages_are_handled_concurrently()
+      {
+         const int messages = 100;
+         
+         var sequences = new ConcurrentBag<SlowJobMessage>();
+         var messageHandler = new SlowJobHandler(sequences);
+
+         long duration;
+         
+         using (var sendServiceBus = await CreateServiceBus())
+         using (var receiveServiceBus = await CreateServiceBus())
+         {
+            var publishTasks = Enumerable.Range(0, messages).Select(i => sendServiceBus.Publish(new SlowJobMessage { Id = i, Duration = 500}));
+            await Task.WhenAll(publishTasks);
+
+            var stopwatch = Stopwatch.StartNew();
+            receiveServiceBus.Subscribe<SlowJobMessage>(messageHandler);
+            await WaitForSubscribers(sequences, messages);
+
+            duration = stopwatch.ElapsedMilliseconds;
+         }
+         
+         Assert.That(sequences.Count, Is.EqualTo(messages));
+         Assert.That(sequences.Select(c => c.Id).Distinct().Count, Is.EqualTo(messages));
+         Assert.That(duration, Is.InRange(500, 1000));
+      }
       
-      private static async Task WaitForSubscribers(IReadOnlyCollection<TestMessage> messages, int expectedCount)
+      private static async Task WaitForSubscribers<T>(IReadOnlyCollection<T> messages, int expectedCount)
       {
          var j = 2;
          while (j < 20 && messages.Count < expectedCount)
          {
             await Task.Delay(j * j);
             j++;
-         }
-      }
-
-      public class TestMessage
-      {
-         public int Sequence { get; set; }
-         
-         public string Id { get; set; }
-      }
-
-      public class TestMessageHandler : IMessageHandler<TestMessage>
-      {
-         private readonly ConcurrentBag<TestMessage> _messages;
-
-         public TestMessageHandler(ConcurrentBag<TestMessage> messages)
-         {
-            _messages = messages;
-         }
-
-         public Task Handle(TestMessage message)
-         {
-            _messages.Add(message);
-
-            return Task.CompletedTask;
-         }
-      }
-
-      public class NullMessageHandler : IMessageHandler<TestMessage>
-      {
-         public Task Handle(TestMessage message)
-         {
-            return Task.CompletedTask;
          }
       }
    }

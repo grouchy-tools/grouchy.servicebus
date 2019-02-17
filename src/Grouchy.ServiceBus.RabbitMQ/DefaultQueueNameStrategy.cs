@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using Grouchy.ServiceBus.Abstractions;
-
 namespace Grouchy.ServiceBus.RabbitMQ
 {
+   using System;
+   using System.Collections.Concurrent;
+   using System.Linq;
+   using Grouchy.ServiceBus.Abstractions;
+
    public class DefaultQueueNameStrategy : IQueueNameStrategy
    {
       private readonly ConcurrentDictionary<Type, string> _queueNames;

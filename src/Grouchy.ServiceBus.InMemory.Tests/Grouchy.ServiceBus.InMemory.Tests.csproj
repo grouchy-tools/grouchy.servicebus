@@ -7,12 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FakeItEasy" Version="5.1.0" />
     <PackageReference Include="nunit" Version="3.10.1" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.10.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Grouchy.ServiceBus.AspNetCore\Grouchy.ServiceBus.AspNetCore.csproj" />
     <ProjectReference Include="..\Grouchy.ServiceBus.Testing\Grouchy.ServiceBus.Testing.csproj" />
     <ProjectReference Include="..\Grouchy.ServiceBus.InMemory\Grouchy.ServiceBus.InMemory.csproj" />
   </ItemGroup>

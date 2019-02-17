@@ -1,17 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <Product>Grouchy.ServiceBus.RabbitMQ</Product>
-    <Title>Grouchy.ServiceBus.RabbitMQ</Title>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Product>Grouchy.ServiceBus.AspNetCore</Product>
+    <Title>Grouchy.ServiceBus.AspNetCore</Title>
     <Authors>Andrew Craven</Authors>
-    <RootNamespace>Grouchy.ServiceBus.RabbitMQ</RootNamespace>
-    <AssemblyName>Grouchy.ServiceBus.RabbitMQ</AssemblyName>
+    <RootNamespace>Grouchy.ServiceBus.AspNetCore</RootNamespace>
+    <AssemblyName>Grouchy.ServiceBus.AspNetCore</AssemblyName>
     <VersionPrefix>0.0.1</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup>
-    <PackageId>Grouchy.ServiceBus.RabbitMQ</PackageId>
+    <PackageId>Grouchy.ServiceBus.AspNetCore</PackageId>
     <PackageLicenseUrl>https://github.com/grouchy-tools/grouchy.servicebus/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/grouchy-tools/grouchy.servicebus</RepositoryUrl>
@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0003" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
-    <PackageReference Include="RabbitMQ.Client" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.2.0" />
   </ItemGroup>
 </Project>

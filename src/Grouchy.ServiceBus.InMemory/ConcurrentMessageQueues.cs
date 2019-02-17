@@ -1,8 +1,8 @@
-using System;
-using System.Collections.Concurrent;
-
 namespace Grouchy.ServiceBus.InMemory
 {
+   using System;
+   using System.Collections.Concurrent;
+
    public class ConcurrentMessageQueues
    {
       private readonly ConcurrentDictionary<Type, object> _queues;

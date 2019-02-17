@@ -1,12 +1,12 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using FakeItEasy;
-using Grouchy.ServiceBus.Abstractions;
-using NUnit.Framework;
-using RabbitMQ.Client;
-
 namespace Grouchy.ServiceBus.RabbitMQ.Tests
 {
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using FakeItEasy;
+    using NUnit.Framework;
+    using global::RabbitMQ.Client;
+    using Grouchy.ServiceBus.Abstractions;
+
     public class RabbitMQServiceBusTests
     {
         private IConnectionFactory _connectionFactory;
@@ -28,7 +28,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
             A.CallTo(() => _connectionFactory.CreateConnection()).Returns(_connection);
             A.CallTo(() => _connection.CreateModel()).Returns(_channel);
             
-            _testSubject = new RabbitMQServiceBus(_connectionFactory, _queueNameStrategy, _serialisationStrategy);
+            _testSubject = new RabbitMQServiceBus(_connectionFactory, A.Fake<IJobQueue>(), _queueNameStrategy, _serialisationStrategy);
         }
 
         [Test]
@@ -51,7 +51,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         [Test]
         public void creates_queue_on_first_subscribe()
         {
-            _testSubject.Subscribe<TestMessage, TestMessageHandler>(new TestMessageHandler());
+            _testSubject.Subscribe<TestMessage>(new TestMessageHandler());
 
             A.CallTo(() => _channel.QueueDeclare(A<string>._, A<bool>._, A<bool>._, A<bool>._, A<IDictionary<string, object>>._)).MustHaveHappenedOnceExactly();
         }
@@ -59,8 +59,8 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         [Test]
         public void does_not_create_queue_on_second_subscribe()
         {
-            _testSubject.Subscribe<TestMessage, TestMessageHandler>(new TestMessageHandler());
-            _testSubject.Subscribe<TestMessage, TestMessageHandler>(new TestMessageHandler());
+            _testSubject.Subscribe<TestMessage>(new TestMessageHandler());
+            _testSubject.Subscribe<TestMessage>(new TestMessageHandler());
 
             A.CallTo(() => _channel.QueueDeclare(A<string>._, A<bool>._, A<bool>._, A<bool>._, A<IDictionary<string, object>>._)).MustHaveHappenedOnceExactly();
         }
@@ -69,7 +69,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         public async Task does_not_create_queue_on_subscribe_after_publish()
         {
             await _testSubject.Publish(new TestMessage());
-            _testSubject.Subscribe<TestMessage, TestMessageHandler>(new TestMessageHandler());
+            _testSubject.Subscribe<TestMessage>(new TestMessageHandler());
 
             A.CallTo(() => _channel.QueueDeclare(A<string>._, A<bool>._, A<bool>._, A<bool>._, A<IDictionary<string, object>>._)).MustHaveHappenedOnceExactly();
         }
@@ -77,7 +77,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         [Test]
         public async Task does_not_create_queue_on_publish_after_subscribe()
         {
-            _testSubject.Subscribe<TestMessage, TestMessageHandler>(new TestMessageHandler());
+            _testSubject.Subscribe<TestMessage>(new TestMessageHandler());
             await _testSubject.Publish(new TestMessage());
 
             A.CallTo(() => _channel.QueueDeclare(A<string>._, A<bool>._, A<bool>._, A<bool>._, A<IDictionary<string, object>>._)).MustHaveHappenedOnceExactly();

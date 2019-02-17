@@ -19,6 +19,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0001" />
+    <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0003" />
   </ItemGroup>
 </Project>

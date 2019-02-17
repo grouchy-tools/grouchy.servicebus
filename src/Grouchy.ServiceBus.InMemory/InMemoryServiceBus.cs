@@ -1,15 +1,19 @@
-using System.Threading;
-using System.Threading.Tasks;
-using Grouchy.ServiceBus.Abstractions;
-
 namespace Grouchy.ServiceBus.InMemory
 {
+   using System.Threading;
+   using System.Threading.Tasks;
+   using Grouchy.ServiceBus.Abstractions;
+
    public class InMemoryServiceBus : IServiceBus
    {
+      private readonly IJobQueue _jobQueue;
       private readonly ConcurrentMessageQueues _queues;
 
-      public InMemoryServiceBus(ConcurrentMessageQueues queues)
+      public InMemoryServiceBus(
+         IJobQueue jobQueue,
+         ConcurrentMessageQueues queues)
       {
+         _jobQueue = jobQueue;
          _queues = queues;
       }
 
@@ -23,22 +27,23 @@ namespace Grouchy.ServiceBus.InMemory
          return Task.CompletedTask;
       }
 
-      public IMessageSubscription Subscribe<TMessage, TMessageHandler>(TMessageHandler messageHandler)
+      public IMessageSubscription Subscribe<TMessage>(IMessageHandler<TMessage> messageHandler)
          where TMessage : class
-         where TMessageHandler : class, IMessageHandler<TMessage>
       {
          var queue = _queues.GetQueue<TMessage>();
 
          var cancellationTokenSource = new CancellationTokenSource();
          var cancellationToken = cancellationTokenSource.Token;
 
-         Task.Run(async () =>
+         IJob JobFactory(TMessage message) => new MessageHandlerJob<TMessage>(message, messageHandler);
+
+         Task.Run(() =>
          {            
             while (!cancellationToken.IsCancellationRequested)
             {
                var message = queue.Take(cancellationToken);
 
-               await messageHandler.Handle(message);
+               _jobQueue.Enqueue(JobFactory(message));
             }
          }, cancellationToken);
 
@@ -48,6 +53,26 @@ namespace Grouchy.ServiceBus.InMemory
       // TODO: Tidy up
       public void Dispose()
       {
+      }
+      
+      private class MessageHandlerJob<TMessage> : IJob
+         where TMessage : class
+      {
+         private readonly TMessage _message;
+         private readonly IMessageHandler<TMessage> _messageHandler;
+
+         public MessageHandlerJob(TMessage message, IMessageHandler<TMessage> messageHandler)
+         {
+            _messageHandler = messageHandler;
+            _message = message;
+         }
+         
+         public async Task RunAsync(CancellationToken cancellationToken)
+         {
+            // TODO: Add cancellationToken to Handle method
+            // TODO: Error handling
+            await _messageHandler.Handle(_message);
+         }
       }
    }
 }

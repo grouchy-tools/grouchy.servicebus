@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Grouchy.ServiceBus.AspNetCore\Grouchy.ServiceBus.AspNetCore.csproj" />
     <ProjectReference Include="..\Grouchy.ServiceBus.RabbitMQ\Grouchy.ServiceBus.RabbitMQ.csproj" />
     <ProjectReference Include="..\Grouchy.ServiceBus.Testing\Grouchy.ServiceBus.Testing.csproj" />
   </ItemGroup>
