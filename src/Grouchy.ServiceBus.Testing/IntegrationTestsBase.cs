@@ -13,6 +13,9 @@ namespace Grouchy.ServiceBus.Testing
       protected abstract Task<IServiceBus> CreateServiceBus();
 
       // TODO: Receive on different bus instances
+      // TODO: Send vs Publish
+      // TODO: Subscribe overload without argument
+      // TODO: Handling unroutable messages https://www.rabbitmq.com/dotnet-api-guide.html
       
       [Test]
       public async Task publish_before_subscribe()

@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using global::RabbitMQ.Client;
 using Grouchy.ServiceBus.Abstractions;
@@ -11,28 +13,34 @@ namespace Grouchy.ServiceBus.RabbitMQ
       private readonly ISerialisationStrategy _serialisationStrategy;
       private readonly IConnection _connection;
       private readonly ThreadLocal<IModel> _channel;
+      private readonly ConcurrentDictionary<string, string> _knownQueueNames;
 
       public RabbitMQServiceBus(
+         RabbitMQConfiguration configuration,
+         IQueueNameStrategy queueNameStrategy,
+         ISerialisationStrategy serialisationStrategy)
+         : this(new ConnectionFactory {HostName = configuration.Host, Port = configuration.Port, DispatchConsumersAsync = true}, queueNameStrategy, serialisationStrategy)
+      {
+      }
+
+      public RabbitMQServiceBus(
+         IConnectionFactory connectionFactory,
          IQueueNameStrategy queueNameStrategy,
          ISerialisationStrategy serialisationStrategy)
       {
          _queueNameStrategy = queueNameStrategy;
          _serialisationStrategy = serialisationStrategy;
 
-         // TODO: Configuration
-         var factory = new ConnectionFactory {HostName = "localhost", DispatchConsumersAsync = true};
-
-         _connection = factory.CreateConnection();
+         _connection = connectionFactory.CreateConnection();
          _channel = new ThreadLocal<IModel>(_connection.CreateModel);
+         _knownQueueNames = new ConcurrentDictionary<string, string>();
       }
 
       public Task Publish<TMessage>(TMessage message)
          where TMessage : class
       {
          var queueName = _queueNameStrategy.GetQueueName(message.GetType());
-
-         // TODO: Only declare if not already done so
-         _channel.Value.QueueDeclare(queueName, true, false, false, null);
+         EnsureQueueDeclared(_channel.Value, queueName);
 
          var properties = _channel.Value.CreateBasicProperties();
          properties.Persistent = true;
@@ -49,12 +57,10 @@ namespace Grouchy.ServiceBus.RabbitMQ
          where TMessageHandler : class, IMessageHandler<TMessage>
       {
          var queueName = _queueNameStrategy.GetQueueName(typeof(TMessage));
-
-         var channel = _connection.CreateModel();
+         var channel = _connection.CreateModel();         
+         EnsureQueueDeclared(channel, queueName);
+         
          var consumerSubscription = new RabbitMQMessageSubscription<TMessage, TMessageHandler>(channel, _serialisationStrategy, messageHandler);
-
-         // TODO: Only declare if not already done so
-         channel.QueueDeclare(queueName, true, false, false, null);
          channel.BasicConsume(queueName, true, consumerSubscription);
 
          return consumerSubscription;
@@ -64,6 +70,19 @@ namespace Grouchy.ServiceBus.RabbitMQ
       public void Dispose()
       {
          _connection?.Close();
+      }
+      
+      private void EnsureQueueDeclared(IModel channel, string queueName)
+      {
+         _knownQueueNames.GetOrAdd(queueName, _ => DeclareQueue(channel, queueName));
+      }
+
+      private static string DeclareQueue(IModel channel, string queueName)
+      {
+         // TODO: Exception handling
+         channel.QueueDeclare(queueName, true, false, false, null);
+
+         return queueName;
       }
    }
 }
