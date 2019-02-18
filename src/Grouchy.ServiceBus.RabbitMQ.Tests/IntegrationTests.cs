@@ -1,3 +1,5 @@
+using System;
+
 namespace Grouchy.ServiceBus.RabbitMQ.Tests
 {
     using System.Threading;
@@ -5,6 +7,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
     using Microsoft.Extensions.Logging;
     using FakeItEasy;
     using NUnit.Framework;
+    using global::RabbitMQ.Client;
     using Grouchy.ServiceBus.Abstractions;
     using Grouchy.ServiceBus.AspNetCore;
     using Grouchy.ServiceBus.Testing;
@@ -18,6 +21,29 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         private IQueueNameStrategy _queueNameStrategy;
         private ISerialisationStrategy _serialisationStrategy;
 
+        [OneTimeSetUp]
+        public async Task setup_before_all_tests()
+        {
+            var connectionFactory = new ConnectionFactory {HostName = "localhost", Port = 5672};
+
+            while (true)
+            {
+                try
+                {
+                    using (var connection = connectionFactory.CreateConnection())
+                    {
+                        if (connection.IsOpen) break;
+                    }
+                    
+                    await Task.Delay(1000);
+                }
+                catch
+                {
+                    await Task.Delay(1000);
+                }
+            }
+        }
+        
         [SetUp]
         public void setup_before_each_test()
         {
