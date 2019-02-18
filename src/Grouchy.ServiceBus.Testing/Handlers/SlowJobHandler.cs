@@ -17,11 +17,9 @@ namespace Grouchy.ServiceBus.Testing.Handlers
 
       public async Task Handle(SlowJobMessage message)
       {
-         Console.WriteLine($"In {message.Id}");
          await Task.Delay(message.Duration);
          
          _messages.Add(message);
-         Console.WriteLine($"Out {message.Id}");
       }
    }
 }

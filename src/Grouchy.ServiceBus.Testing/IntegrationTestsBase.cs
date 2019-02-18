@@ -158,7 +158,7 @@
          
          Assert.That(sequences.Count, Is.EqualTo(messages));
          Assert.That(sequences.Select(c => c.Id).Distinct().Count, Is.EqualTo(messages));
-         Assert.That(duration, Is.InRange(500, 1000));
+         Assert.That(duration, Is.InRange(500, 2000));
       }
       
       private static async Task WaitForSubscribers<T>(IReadOnlyCollection<T> messages, int expectedCount)
