@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-
+    <TargetFrameworks>net461;netcoreapp2.2</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <RootNamespace>Grouchy.ServiceBus.Tests</RootNamespace>
+    <AssemblyName>Grouchy.ServiceBus.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

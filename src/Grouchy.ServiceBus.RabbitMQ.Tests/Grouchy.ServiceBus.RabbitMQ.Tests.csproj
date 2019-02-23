@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>net461;netcoreapp2.2</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <RootNamespace>Grouchy.ServiceBus.RabbitMQ.Tests</RootNamespace>
     <AssemblyName>Grouchy.ServiceBus.RabbitMQ.Tests</AssemblyName>

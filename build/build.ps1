@@ -51,11 +51,11 @@ task Test -depends Build {
    exec { dotnet restore $InMemoryTestProjectPath }
    exec { dotnet restore $RabbitMQTestProjectPath }
    exec { dotnet restore $ServiceBusTestProjectPath }
-   exec { dotnet test $InMemoryTestProjectPath -c $Configuration -f netcoreapp2.0 --filter Category!=local-only }
+   exec { dotnet test $InMemoryTestProjectPath -c $Configuration -f netcoreapp2.2 --filter Category!=local-only }
    exec { dotnet test $InMemoryTestProjectPath -c $Configuration -f net461 --filter Category!=local-only }
-   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f netcoreapp2.0 --filter Category!=local-only }
+   exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f netcoreapp2.2 --filter Category!=local-only }
    exec { dotnet test $RabbitMQTestProjectPath -c $Configuration -f net461 --filter Category!=local-only }
-   exec { dotnet test $ServiceBusTestProjectPath -c $Configuration -f netcoreapp2.0 --filter Category!=local-only }
+   exec { dotnet test $ServiceBusTestProjectPath -c $Configuration -f netcoreapp2.2 --filter Category!=local-only }
    exec { dotnet test $ServiceBusTestProjectPath -c $Configuration -f net461 --filter Category!=local-only }
 }
 
