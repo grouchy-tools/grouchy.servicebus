@@ -7,7 +7,7 @@ namespace Grouchy.ServiceBus.Testing.Handlers
    using Grouchy.ServiceBus.Abstractions;
    using Grouchy.ServiceBus.Testing.Messages;
 
-   public class TestMessageHandler : IAsyncMessageHandler<TestMessage>
+   public class TestMessageHandler : IMessageHandler<TestMessage>
    {
       private readonly ConcurrentBag<TestMessage> _messages;
 
@@ -24,7 +24,7 @@ namespace Grouchy.ServiceBus.Testing.Handlers
       }
    }
 
-   public class FailingTestMessageHandler : IAsyncMessageHandler<TestMessage>
+   public class FailingTestMessageHandler : IMessageHandler<TestMessage>
    {
       public Task HandleAsync(TestMessage message, CancellationToken cancellationToken)
       {

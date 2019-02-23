@@ -6,7 +6,7 @@ namespace Grouchy.ServiceBus.Testing.Handlers
    using Grouchy.ServiceBus.Abstractions;
    using Grouchy.ServiceBus.Testing.Messages;
 
-   public class SlowJobHandler : IAsyncMessageHandler<SlowJobMessage>
+   public class SlowJobHandler : IMessageHandler<SlowJobMessage>
    {
       private readonly ConcurrentBag<SlowJobMessage> _messages;
 

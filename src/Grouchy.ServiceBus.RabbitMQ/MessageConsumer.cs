@@ -4,6 +4,7 @@ namespace Grouchy.ServiceBus.RabbitMQ
    using System.Threading;
    using System.Threading.Tasks;
    using global::RabbitMQ.Client;
+   using Grouchy.ServiceBus.Abstractions;
 
    public class MessageConsumer<TMessage> : AsyncDefaultBasicConsumer
       where TMessage : class

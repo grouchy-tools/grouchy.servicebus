@@ -36,7 +36,7 @@
          var id = Guid.NewGuid().ToString().Substring(8);
 
          var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
             .Returns(new TestMessageHandler(sequences));
 
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
@@ -58,7 +58,7 @@
          var id = Guid.NewGuid().ToString().Substring(8);
          
          var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
             .Returns(new TestMessageHandler(sequences));
 
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
@@ -84,7 +84,7 @@
 
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
          {
-            A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+            A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
                .Returns(new TestMessageHandler(prePublishMessages));
 
             var subscription = serviceBus.Subscribe<TestMessage>();
@@ -94,7 +94,7 @@
 
             await Task.Delay(50);
 
-            A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+            A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
                .Returns(new TestMessageHandler(postPublishMessages));
 
             serviceBus.Subscribe<TestMessage>();
@@ -112,7 +112,7 @@
          const int messages = 100;
          
          var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
             .Returns(new TestMessageHandler(sequences));
 
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
@@ -135,7 +135,7 @@
          const int messages = 100;
          
          var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<TestMessage>)))
+         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
             .Returns(new TestMessageHandler(sequences));
          
          using (var sendServiceBus = await CreateServiceBus(_serviceProvider))
@@ -159,7 +159,7 @@
          const int messages = 100;
          
          var sequences = new ConcurrentBag<SlowJobMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IAsyncMessageHandler<SlowJobMessage>)))
+         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<SlowJobMessage>)))
             .Returns(new SlowJobHandler(sequences));
 
          long duration;

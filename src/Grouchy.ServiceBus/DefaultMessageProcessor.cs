@@ -1,8 +1,8 @@
 namespace Grouchy.ServiceBus
 {
-   using System;
    using System.Threading;
    using System.Threading.Tasks;
+   using Grouchy.ServiceBus.Abstractions;
 
    public class DefaultMessageProcessor : IMessageProcessor
    {

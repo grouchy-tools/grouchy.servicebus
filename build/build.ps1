@@ -7,7 +7,7 @@ properties {
    $InMemoryTestProjectPath = "$SrcPath\Grouchy.ServiceBus.InMemory.Tests\Grouchy.ServiceBus.InMemory.Tests.csproj"
    $RabbitMQProjectPath = "$SrcPath\Grouchy.ServiceBus.RabbitMQ\Grouchy.ServiceBus.RabbitMQ.csproj"
    $RabbitMQTestProjectPath = "$SrcPath\Grouchy.ServiceBus.RabbitMQ.Tests\Grouchy.ServiceBus.RabbitMQ.Tests.csproj"
-   $AspNetCoreProjectPath = "$SrcPath\Grouchy.ServiceBus.AspNetCore\Grouchy.ServiceBus.AspNetCore.csproj"
+   $ServiceBusProjectPath = "$SrcPath\Grouchy.ServiceBus\Grouchy.ServiceBus.csproj"
    $Configuration = if ($Configuration) {$Configuration} else { "Debug" }
 }
 
@@ -26,21 +26,21 @@ task Build {
    exec { dotnet --version }
    exec { dotnet restore $InMemoryProjectPath }
    exec { dotnet restore $RabbitMQProjectPath }
-   exec { dotnet restore $AspNetCoreProjectPath }
+   exec { dotnet restore $ServiceBusProjectPath }
 
    if ($VersionSuffix -eq $null -or $VersionSuffix -eq "") {
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
       exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental }
       exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental }
-      exec { dotnet build $AspNetCoreProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
+      exec { dotnet build $ServiceBusProjectPath -c $Configuration -f netstandard2.0 --no-incremental }
    }
    else {
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
       exec { dotnet build $InMemoryProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
       exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental --version-suffix $VersionSuffix }
       exec { dotnet build $RabbitMQProjectPath -c $Configuration -f net461 --no-incremental --version-suffix $VersionSuffix }
-      exec { dotnet build $AspNetCoreProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
+      exec { dotnet build $ServiceBusProjectPath -c $Configuration -f netstandard2.0 --no-incremental --version-suffix $VersionSuffix }
    }
 }
 
@@ -57,11 +57,11 @@ task Package -depends Build {
    if ($VersionSuffix -eq $null -or $VersionSuffix -eq "") {
       exec { dotnet pack $InMemoryProjectPath -c $Configuration -o $ArtifactsPath }
       exec { dotnet pack $RabbitMQProjectPath -c $Configuration -o $ArtifactsPath }
-      exec { dotnet pack $AspNetCoreProjectPath -c $Configuration -o $ArtifactsPath }
+      exec { dotnet pack $ServiceBusProjectPath -c $Configuration -o $ArtifactsPath }
    }
    else {
       exec { dotnet pack $InMemoryProjectPath -c $Configuration -o $ArtifactsPath --version-suffix $VersionSuffix }
       exec { dotnet pack $RabbitMQProjectPath -c $Configuration -o $ArtifactsPath --version-suffix $VersionSuffix }
-      exec { dotnet pack $AspNetCoreProjectPath -c $Configuration -o $ArtifactsPath --version-suffix $VersionSuffix }
+      exec { dotnet pack $ServiceBusProjectPath -c $Configuration -o $ArtifactsPath --version-suffix $VersionSuffix }
    }
 }

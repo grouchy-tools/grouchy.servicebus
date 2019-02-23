@@ -17,5 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Grouchy.ServiceBus.RabbitMQ\Grouchy.ServiceBus.RabbitMQ.csproj" />
     <ProjectReference Include="..\Grouchy.ServiceBus.Testing\Grouchy.ServiceBus.Testing.csproj" />
+    <ProjectReference Include="..\Grouchy.ServiceBus\Grouchy.ServiceBus.csproj" />
   </ItemGroup>
 </Project>

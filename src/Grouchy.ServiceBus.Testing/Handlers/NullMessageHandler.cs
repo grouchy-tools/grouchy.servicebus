@@ -5,7 +5,7 @@ namespace Grouchy.ServiceBus.Testing.Handlers
    using Grouchy.ServiceBus.Abstractions;
    using Grouchy.ServiceBus.Testing.Messages;
 
-   public class NullMessageHandler : IAsyncMessageHandler<TestMessage>
+   public class NullMessageHandler : IMessageHandler<TestMessage>
    {
       public Task HandleAsync(TestMessage message, CancellationToken cancellationToken)
       {

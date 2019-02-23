@@ -12,10 +12,10 @@ namespace Grouchy.ServiceBus
          _serviceProvider = serviceProvider;
       }
       
-      public IAsyncMessageHandler<TMessage> Create<TMessage>()
+      public IMessageHandler<TMessage> Create<TMessage>()
          where TMessage : class
       {
-         var messageHandler = (IAsyncMessageHandler<TMessage>)_serviceProvider.GetService(typeof(IAsyncMessageHandler<TMessage>));
+         var messageHandler = (IMessageHandler<TMessage>)_serviceProvider.GetService(typeof(IMessageHandler<TMessage>));
          return messageHandler;
       }
    }

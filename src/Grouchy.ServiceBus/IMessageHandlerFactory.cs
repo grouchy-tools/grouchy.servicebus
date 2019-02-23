@@ -4,6 +4,6 @@ namespace Grouchy.ServiceBus
 
    public interface IMessageHandlerFactory
    {
-      IAsyncMessageHandler<TMessage> Create<TMessage>() where TMessage : class;
+      IMessageHandler<TMessage> Create<TMessage>() where TMessage : class;
    }
 }

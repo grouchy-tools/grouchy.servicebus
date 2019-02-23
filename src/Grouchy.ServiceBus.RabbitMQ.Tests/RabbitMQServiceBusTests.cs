@@ -88,7 +88,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
         {
         }
 
-        public class TestMessageHandler : IAsyncMessageHandler<TestMessage>
+        public class TestMessageHandler : IMessageHandler<TestMessage>
         {
             public Task HandleAsync(TestMessage message, CancellationToken cancellationToken)
             {
