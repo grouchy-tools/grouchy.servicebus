@@ -74,7 +74,7 @@
       }
 
       [Test]
-      //[Category("local-only")]
+      [Category("local-only")]
       public async Task dispose_subscription_before_publish()
       {
          var id = Guid.NewGuid().ToString().Substring(8);
