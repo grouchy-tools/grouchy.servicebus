@@ -12,7 +12,7 @@ namespace Grouchy.ServiceBus
       {
          _messageHandlerFactory = messageHandlerFactory;
       }
-        
+      
       public async Task ProcessAsync<TMessage>(TMessage message, CancellationToken cancellationToken)
          where TMessage : class
       {

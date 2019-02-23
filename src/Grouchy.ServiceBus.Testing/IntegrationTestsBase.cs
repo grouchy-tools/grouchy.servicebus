@@ -22,7 +22,6 @@
       // TODO: Send vs Publish, Receive vs Subscribe
       // TODO: Handling unroutable messages https://www.rabbitmq.com/dotnet-api-guide.html
       // TODO: manual ack/nack
-      // TODO: sync handlers
 
       [SetUp]
       public void setup_before_each_test_base()
@@ -75,6 +74,7 @@
       }
 
       [Test]
+      //[Category("local-only")]
       public async Task dispose_subscription_before_publish()
       {
          var id = Guid.NewGuid().ToString().Substring(8);
@@ -99,7 +99,7 @@
 
             serviceBus.Subscribe<TestMessage>();
 
-            await Task.Delay(500);
+            await Task.Delay(50);
          }
          
          Assert.That(prePublishMessages.Count, Is.EqualTo(0));

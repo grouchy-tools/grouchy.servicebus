@@ -6,6 +6,6 @@
   <ItemGroup>
     <PackageReference Include="FakeItEasy" Version="5.1.0" />
     <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0005" />
-    <PackageReference Include="nunit" Version="3.10.1" />
+    <PackageReference Include="nunit" Version="3.11.0" />
   </ItemGroup>
 </Project>

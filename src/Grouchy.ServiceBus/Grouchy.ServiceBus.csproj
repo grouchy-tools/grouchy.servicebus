@@ -1,9 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <Product>Grouchy.ServiceBus</Product>
+    <Title>Grouchy.ServiceBus</Title>
+    <Authors>Andrew Craven</Authors>
+    <RootNamespace>Grouchy.ServiceBus</RootNamespace>
+    <AssemblyName>Grouchy.ServiceBus</AssemblyName>
+    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-
+  <PropertyGroup>
+    <PackageId>Grouchy.ServiceBus</PackageId>
+    <PackageLicenseUrl>https://github.com/grouchy-tools/grouchy.servicebus/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>git://github.com/grouchy-tools/grouchy.servicebus</RepositoryUrl>
+  </PropertyGroup>
+  
   <ItemGroup>
     <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0005" />
   </ItemGroup>
