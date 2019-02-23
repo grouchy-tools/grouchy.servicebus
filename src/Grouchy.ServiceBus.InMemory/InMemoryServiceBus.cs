@@ -6,15 +6,15 @@ namespace Grouchy.ServiceBus.InMemory
 
    public class InMemoryServiceBus : IServiceBus
    {
-      private readonly IJobQueue _jobQueue;
       private readonly ConcurrentMessageQueues _queues;
+      private readonly IMessageProcessor _messageProcessor;
 
       public InMemoryServiceBus(
-         IJobQueue jobQueue,
-         ConcurrentMessageQueues queues)
+         ConcurrentMessageQueues queues,
+         IMessageProcessor messageProcessor)
       {
-         _jobQueue = jobQueue;
          _queues = queues;
+         _messageProcessor = messageProcessor;
       }
 
       public Task Publish<TMessage>(TMessage message)
@@ -27,7 +27,7 @@ namespace Grouchy.ServiceBus.InMemory
          return Task.CompletedTask;
       }
 
-      public IMessageSubscription Subscribe<TMessage>(IMessageHandler<TMessage> messageHandler)
+      public IMessageSubscription Subscribe<TMessage>()
          where TMessage : class
       {
          var queue = _queues.GetQueue<TMessage>();
@@ -35,15 +35,14 @@ namespace Grouchy.ServiceBus.InMemory
          var cancellationTokenSource = new CancellationTokenSource();
          var cancellationToken = cancellationTokenSource.Token;
 
-         IJob JobFactory(TMessage message) => new MessageHandlerJob<TMessage>(message, messageHandler);
-
-         Task.Run(() =>
+         Task.Run(()  =>
          {            
             while (!cancellationToken.IsCancellationRequested)
             {
                var message = queue.Take(cancellationToken);
 
-               _jobQueue.Enqueue(JobFactory(message));
+               // TODO: Error handling
+               Task.Run(() => _messageProcessor.ProcessAsync(message, cancellationToken), cancellationToken);
             }
          }, cancellationToken);
 
@@ -53,26 +52,6 @@ namespace Grouchy.ServiceBus.InMemory
       // TODO: Tidy up
       public void Dispose()
       {
-      }
-      
-      private class MessageHandlerJob<TMessage> : IJob
-         where TMessage : class
-      {
-         private readonly TMessage _message;
-         private readonly IMessageHandler<TMessage> _messageHandler;
-
-         public MessageHandlerJob(TMessage message, IMessageHandler<TMessage> messageHandler)
-         {
-            _messageHandler = messageHandler;
-            _message = message;
-         }
-         
-         public async Task RunAsync(CancellationToken cancellationToken)
-         {
-            // TODO: Add cancellationToken to Handle method
-            // TODO: Error handling
-            await _messageHandler.Handle(_message);
-         }
       }
    }
 }

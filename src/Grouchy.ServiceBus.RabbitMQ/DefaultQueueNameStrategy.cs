@@ -22,12 +22,12 @@ namespace Grouchy.ServiceBus.RabbitMQ
 
       private static string GetQueueNameFromMessageType(Type messageType)
       {
-         if (messageType.GetCustomAttributes(typeof(QueueNameAttribute), true).FirstOrDefault() is QueueNameAttribute attribute)
+         if (messageType.GetCustomAttributes(typeof(MessageNameAttribute), true).FirstOrDefault() is MessageNameAttribute attribute)
          {
             return attribute.Name;
          }
 
-         return messageType.FullName;
+         return messageType.Name;
       }
    }
 }

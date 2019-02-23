@@ -18,8 +18,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0003" />
+    <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0004" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
     <PackageReference Include="RabbitMQ.Client" Version="5.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Grouchy.ServiceBus\Grouchy.ServiceBus.csproj" />
   </ItemGroup>
 </Project>

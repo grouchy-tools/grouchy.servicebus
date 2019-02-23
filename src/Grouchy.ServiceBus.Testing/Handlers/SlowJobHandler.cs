@@ -1,12 +1,12 @@
 namespace Grouchy.ServiceBus.Testing.Handlers
 {
-   using System;
    using System.Collections.Concurrent;
+   using System.Threading;
    using System.Threading.Tasks;
    using Grouchy.ServiceBus.Abstractions;
    using Grouchy.ServiceBus.Testing.Messages;
 
-   public class SlowJobHandler : IMessageHandler<SlowJobMessage>
+   public class SlowJobHandler : IAsyncMessageHandler<SlowJobMessage>
    {
       private readonly ConcurrentBag<SlowJobMessage> _messages;
 
@@ -15,7 +15,7 @@ namespace Grouchy.ServiceBus.Testing.Handlers
          _messages = messages;
       }
 
-      public async Task Handle(SlowJobMessage message)
+      public async Task HandleAsync(SlowJobMessage message, CancellationToken cancellationToken)
       {
          await Task.Delay(message.Duration);
          

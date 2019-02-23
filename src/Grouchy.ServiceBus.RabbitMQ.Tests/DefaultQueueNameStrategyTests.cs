@@ -12,7 +12,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
 
          var result = testSubject.GetQueueName(typeof(SimplePoco));
          
-         Assert.That(result, Is.EqualTo("Grouchy.ServiceBus.RabbitMQ.Tests.DefaultQueueNameStrategyTests+SimplePoco"));
+         Assert.That(result, Is.EqualTo("SimplePoco"));
       }
 
       [Test]
@@ -29,7 +29,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
       {
       }
 
-      [QueueName("alternate-queue-name")]
+      [MessageName("alternate-queue-name")]
       private class PocoWithQueueNameAttribute
       {
       }

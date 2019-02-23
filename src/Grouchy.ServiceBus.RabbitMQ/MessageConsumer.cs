@@ -1,39 +1,37 @@
 namespace Grouchy.ServiceBus.RabbitMQ
 {
    using System;
+   using System.Threading;
+   using System.Threading.Tasks;
    using global::RabbitMQ.Client;
-   using Grouchy.ServiceBus.Abstractions;
 
-   public class RabbitMQMessageSubscription<TMessage> : DefaultBasicConsumer, IMessageSubscription
+   public class MessageConsumer<TMessage> : AsyncDefaultBasicConsumer
       where TMessage : class
    {
       private readonly IModel _channel;
-      private readonly IJobQueue _jobQueue;
-      private readonly Func<TMessage, IJob> _jobFactory;
       private readonly ISerialisationStrategy _serialisationStrategy;
+      private readonly IMessageProcessor _messageProcessor;
 
       private bool _disposed;
       
-      public RabbitMQMessageSubscription(
+      public MessageConsumer(
          IModel channel,
-         IJobQueue jobQueue,
-         Func<TMessage, IJob> jobFactory,
-         ISerialisationStrategy serialisationStrategy)
+         ISerialisationStrategy serialisationStrategy,
+         IMessageProcessor messageProcessor)
          : base(channel)
       {
          _channel = channel;
-         _jobQueue = jobQueue;
-         _jobFactory = jobFactory;
          _serialisationStrategy = serialisationStrategy;
+         _messageProcessor = messageProcessor;
       }
 
-      ~RabbitMQMessageSubscription()
+      ~MessageConsumer()
       {
          Dispose(false);         
       }
 
       // TODO: Error handling, retry, ack etc.
-      public override void HandleBasicDeliver(
+      public override async Task HandleBasicDeliver(
          string consumerTag,
          ulong deliveryTag,
          bool redelivered,
@@ -42,11 +40,17 @@ namespace Grouchy.ServiceBus.RabbitMQ
          IBasicProperties properties,
          byte[] body)
       {
-         base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body);
+         await base.HandleBasicDeliver(consumerTag, deliveryTag, redelivered, exchange, routingKey, properties, body);
 
          var message = _serialisationStrategy.Deserialise<TMessage>(body);
 
-         _jobQueue.Enqueue(_jobFactory(message));
+         // TODO: Error handling (nack, requeue?, dead letter?)
+         // TODO: Logging/metrics
+         // TODO: Cancellation token
+         await _messageProcessor.ProcessAsync(message, CancellationToken.None);
+
+         // TODO:
+         _channel.BasicAck(deliveryTag, false);
       }
 
       public void Dispose()
@@ -55,7 +59,7 @@ namespace Grouchy.ServiceBus.RabbitMQ
          GC.SuppressFinalize(this);
       }
 
-      protected virtual void Dispose(bool disposing)
+      private void Dispose(bool disposing)
       {
          if (_disposed) return;
 

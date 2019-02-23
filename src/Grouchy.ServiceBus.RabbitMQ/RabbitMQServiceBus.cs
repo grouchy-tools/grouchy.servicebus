@@ -1,113 +1,95 @@
 namespace Grouchy.ServiceBus.RabbitMQ
 {
-   using System.Collections.Concurrent;
+   using System;
    using System.Threading;
    using System.Threading.Tasks;
    using global::RabbitMQ.Client;
    using Grouchy.ServiceBus.Abstractions;
 
+   // TODO: should two handlers for the same message create different queues. Thus when a message is received from
+   // a queue there will be only 1 handler
+   
    public class RabbitMQServiceBus : IServiceBus
    {
-      private readonly IJobQueue _jobQueue;
       private readonly IQueueNameStrategy _queueNameStrategy;
       private readonly ISerialisationStrategy _serialisationStrategy;
-      private readonly IConnection _connection;
-      private readonly ThreadLocal<IModel> _channel;
-      private readonly ConcurrentDictionary<string, string> _knownQueueNames;
-
+      private readonly IMessageProcessor _messageProcessor;
+      private readonly Lazy<IConnection> _publishConnection;
+      private readonly Lazy<IConnection> _consumeConnection;
+      private readonly ResourcePool<IModel> _publishChannels;
+      private readonly QueueManager _queueManager;
+      
       public RabbitMQServiceBus(
          RabbitMQConfiguration configuration,
-         IJobQueue jobQueue,
          IQueueNameStrategy queueNameStrategy,
-         ISerialisationStrategy serialisationStrategy)
-         : this(new ConnectionFactory {HostName = configuration.Host, Port = configuration.Port}, jobQueue, queueNameStrategy, serialisationStrategy)
+         ISerialisationStrategy serialisationStrategy,
+         IMessageProcessor messageProcessor)
+         : this(new ConnectionFactory {HostName = configuration.Host, Port = configuration.Port, DispatchConsumersAsync = true}, queueNameStrategy, serialisationStrategy, messageProcessor)
       {
       }
 
       public RabbitMQServiceBus(
          IConnectionFactory connectionFactory,
-         IJobQueue jobQueue,
          IQueueNameStrategy queueNameStrategy,
-         ISerialisationStrategy serialisationStrategy)
+         ISerialisationStrategy serialisationStrategy,
+         IMessageProcessor messageProcessor)
       {
-         _jobQueue = jobQueue;
          _queueNameStrategy = queueNameStrategy;
          _serialisationStrategy = serialisationStrategy;
-         _connection = connectionFactory.CreateConnection();
-         _channel = new ThreadLocal<IModel>(_connection.CreateModel);
-         _knownQueueNames = new ConcurrentDictionary<string, string>();
+         _messageProcessor = messageProcessor;
+         _publishConnection = new Lazy<IConnection>(connectionFactory.CreateConnection, LazyThreadSafetyMode.PublicationOnly);
+         _consumeConnection = new Lazy<IConnection>(connectionFactory.CreateConnection, LazyThreadSafetyMode.PublicationOnly);
+         // TODO: Is 10 enough? Add to config
+         _publishChannels = new ResourcePool<IModel>(10,() => _publishConnection.Value.CreateModel());
+         _queueManager = new QueueManager();
       }
 
-      public Task Publish<TMessage>(TMessage message)
+      public async Task Publish<TMessage>(TMessage message)
          where TMessage : class
       {
          var queueName = _queueNameStrategy.GetQueueName(message.GetType());
-         EnsureQueueDeclared(_channel.Value, queueName);
 
-         var properties = _channel.Value.CreateBasicProperties();
-         properties.Persistent = true;
+         using (var channel = await _publishChannels.AllocateAsync())
+         {
+            // TODO: Should be sending to exchange rather than to queue
+            _queueManager.EnsureQueueDeclared(channel.Value, queueName);
 
-         var body = _serialisationStrategy.Serialise(message);
+            var properties = channel.Value.CreateBasicProperties();
+            properties.Persistent = true;
 
-         _channel.Value.BasicPublish(string.Empty, queueName, properties, body);
+            var body = _serialisationStrategy.Serialise(message);
 
-         return Task.CompletedTask;
+            channel.Value.BasicPublish(string.Empty, queueName, properties, body);
+         }
       }
 
-      public IMessageSubscription Subscribe<TMessage>(IMessageHandler<TMessage> messageHandler)
+      // TODO: SubscriptionOptions - no of concurrent consumers
+      public IMessageSubscription Subscribe<TMessage>()
          where TMessage : class
       {
          var queueName = _queueNameStrategy.GetQueueName(typeof(TMessage));
 
-         var channel = _connection.CreateModel();         
-         EnsureQueueDeclared(channel, queueName);
+         var subscription = new MessageSubscription<TMessage>(_queueManager, _serialisationStrategy, _messageProcessor);
 
-         IJob JobFactory(TMessage message) => new MessageHandlerJob<TMessage>(message, messageHandler);
+         for (var i = 0; i < 10; i++)
+         {
+            subscription.AddConsumer(_consumeConnection.Value.CreateModel(), queueName);
+         }
          
-         var consumerSubscription = new RabbitMQMessageSubscription<TMessage>(channel, _jobQueue, JobFactory, _serialisationStrategy);
-         channel.BasicConsume(queueName, true, consumerSubscription);
-
-         return consumerSubscription;
+         return subscription;
       }
 
       // TODO: Tidy up
       public void Dispose()
       {
-         _connection?.Close();
-      }
-      
-      private void EnsureQueueDeclared(IModel channel, string queueName)
-      {
-         _knownQueueNames.GetOrAdd(queueName, _ => DeclareQueue(channel, queueName));
-      }
-
-      private static string DeclareQueue(IModel channel, string queueName)
-      {
-         // TODO: Exception handling
-         channel.QueueDeclare(queueName, true, false, false, null);
-
-         return queueName;
-      }
-
-      private class MessageHandlerJob<TMessage> : IJob
-         where TMessage : class
-      {
-         private readonly TMessage _message;
-         private readonly IMessageHandler<TMessage> _messageHandler;
-
-         public MessageHandlerJob(TMessage message, IMessageHandler<TMessage> messageHandler)
+         if (_publishConnection.IsValueCreated)
          {
-            _messageHandler = messageHandler;
-            _message = message;
+            _publishConnection.Value.Dispose();
          }
-         
-         public async Task RunAsync(CancellationToken cancellationToken)
+         if (_consumeConnection.IsValueCreated)
          {
-            // TODO: Add cancellationToken to Handle method
-            // TODO: Error handling
-            // TODO: ack/nack
-            await _messageHandler.Handle(_message);
+            _consumeConnection.Value.Dispose();
          }
-      }
+      }  
    }
 }
