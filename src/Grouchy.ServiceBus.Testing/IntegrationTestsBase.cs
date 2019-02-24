@@ -6,15 +6,17 @@
    using System.Diagnostics;
    using System.Threading.Tasks;
    using System.Linq;
-   using FakeItEasy;
    using NUnit.Framework;
    using Grouchy.ServiceBus.Abstractions;
    using Grouchy.ServiceBus.Testing.Handlers;
    using Grouchy.ServiceBus.Testing.Messages;
+   using Microsoft.Extensions.DependencyInjection;
 
    public abstract class IntegrationTestsBase
    {
       private IServiceProvider _serviceProvider;
+      private ConcurrentBag<TestMessage> _testMessages;
+      private ConcurrentBag<SlowJobMessage> _slowJobMessages;
 
       protected abstract Task<IServiceBus> CreateServiceBus(IServiceProvider sp);
 
@@ -26,7 +28,17 @@
       [SetUp]
       public void setup_before_each_test_base()
       {
-         _serviceProvider = A.Fake<IServiceProvider>();
+         var services = new ServiceCollection();
+
+         _testMessages = new ConcurrentBag<TestMessage>();
+         _slowJobMessages = new ConcurrentBag<SlowJobMessage>();
+
+         services.AddSingleton(_testMessages);
+         services.AddSingleton(_slowJobMessages);
+         services.AddScoped<IMessageHandler<TestMessage>, TestMessageHandler>();
+         services.AddScoped<IMessageHandler<SlowJobMessage>, SlowJobHandler>();
+         
+         _serviceProvider = services.BuildServiceProvider();
       }
       
       [Test]
@@ -34,21 +46,17 @@
       {
          var id = Guid.NewGuid().ToString().Substring(8);
 
-         var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-            .Returns(new TestMessageHandler(sequences));
-
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
          {
             await serviceBus.Publish(new TestMessage {Id = id});
             
             serviceBus.Subscribe<TestMessage>();
             
-            await WaitForSubscribers(sequences, 1);
+            await WaitForSubscribers(_testMessages, 1);
          }
          
-         Assert.That(sequences.Count, Is.EqualTo(1));
-         Assert.That(sequences.Single().Id, Is.EqualTo(id));
+         Assert.That(_testMessages.Count, Is.EqualTo(1));
+         Assert.That(_testMessages.Single().Id, Is.EqualTo(id));
       }
 
       [Test]
@@ -56,21 +64,17 @@
       {
          var id = Guid.NewGuid().ToString().Substring(8);
          
-         var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-            .Returns(new TestMessageHandler(sequences));
-
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
          {
             serviceBus.Subscribe<TestMessage>();
             
             await serviceBus.Publish(new TestMessage {Id = id});
             
-            await WaitForSubscribers(sequences, 1);
+            await WaitForSubscribers(_testMessages, 1);
          }
          
-         Assert.That(sequences.Count, Is.EqualTo(1));
-         Assert.That(sequences.Single().Id, Is.EqualTo(id));
+         Assert.That(_testMessages.Count, Is.EqualTo(1));
+         Assert.That(_testMessages.Single().Id, Is.EqualTo(id));
       }
 
       [Test]
@@ -79,14 +83,8 @@
       {
          var id = Guid.NewGuid().ToString().Substring(8);
          
-         var prePublishMessages = new ConcurrentBag<TestMessage>();
-         var postPublishMessages = new ConcurrentBag<TestMessage>();
-
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
          {
-            A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-               .Returns(new TestMessageHandler(prePublishMessages));
-
             var subscription = serviceBus.Subscribe<TestMessage>();
             subscription.Dispose();
             
@@ -94,16 +92,14 @@
 
             await Task.Delay(50);
 
-            A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-               .Returns(new TestMessageHandler(postPublishMessages));
-
+            Assert.That(_testMessages.Count, Is.EqualTo(0));
+            
             serviceBus.Subscribe<TestMessage>();
 
             await Task.Delay(50);
          }
          
-         Assert.That(prePublishMessages.Count, Is.EqualTo(0));
-         Assert.That(postPublishMessages.Count, Is.EqualTo(1));
+         Assert.That(_testMessages.Count, Is.EqualTo(1));
       }
 
       [Test]
@@ -111,10 +107,6 @@
       {
          const int messages = 100;
          
-         var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-            .Returns(new TestMessageHandler(sequences));
-
          using (var serviceBus = await CreateServiceBus(_serviceProvider))
          {
             serviceBus.Subscribe<TestMessage>();
@@ -122,21 +114,17 @@
             var publishTasks = Enumerable.Range(0, messages).Select(i => serviceBus.Publish(new TestMessage {Sequence = i}));
             await Task.WhenAll(publishTasks);
 
-            await WaitForSubscribers(sequences, messages);
+            await WaitForSubscribers(_testMessages, messages);
          }
          
-         Assert.That(sequences.Count, Is.EqualTo(messages));
-         Assert.That(sequences.Select(c => c.Sequence).Distinct().Count, Is.EqualTo(messages));
+         Assert.That(_testMessages.Count, Is.EqualTo(messages));
+         Assert.That(_testMessages.Select(c => c.Sequence).Distinct().Count, Is.EqualTo(messages));
       }
 
       [Test]
       public async Task multiple_messages_are_sent_from_and_received_by_different_bus()
       {
          const int messages = 100;
-         
-         var sequences = new ConcurrentBag<TestMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<TestMessage>)))
-            .Returns(new TestMessageHandler(sequences));
          
          using (var sendServiceBus = await CreateServiceBus(_serviceProvider))
          using (var receiveServiceBus = await CreateServiceBus(_serviceProvider))
@@ -146,11 +134,11 @@
             var publishTasks = Enumerable.Range(0, messages).Select(i => sendServiceBus.Publish(new TestMessage {Sequence = i}));
             await Task.WhenAll(publishTasks);
 
-            await WaitForSubscribers(sequences, messages);
+            await WaitForSubscribers(_testMessages, messages);
          }
          
-         Assert.That(sequences.Count, Is.EqualTo(messages));
-         Assert.That(sequences.Select(c => c.Sequence).Distinct().Count, Is.EqualTo(messages));
+         Assert.That(_testMessages.Count, Is.EqualTo(messages));
+         Assert.That(_testMessages.Select(c => c.Sequence).Distinct().Count, Is.EqualTo(messages));
       }
 
       [Test]
@@ -158,10 +146,6 @@
       {
          const int messages = 100;
          
-         var sequences = new ConcurrentBag<SlowJobMessage>();
-         A.CallTo(() => _serviceProvider.GetService(typeof(IMessageHandler<SlowJobMessage>)))
-            .Returns(new SlowJobHandler(sequences));
-
          long duration;
          
          using (var sendServiceBus = await CreateServiceBus(_serviceProvider))
@@ -172,17 +156,17 @@
 
             var stopwatch = Stopwatch.StartNew();
             receiveServiceBus.Subscribe<SlowJobMessage>();
-            await WaitForSubscribers(sequences, messages);
+            await WaitForSubscribers(_slowJobMessages, messages);
 
             duration = stopwatch.ElapsedMilliseconds;
          }
          
-         Assert.That(sequences.Count, Is.EqualTo(messages));
-         Assert.That(sequences.Select(c => c.Id).Distinct().Count, Is.EqualTo(messages));
+         Assert.That(_slowJobMessages.Count, Is.EqualTo(messages));
+         Assert.That(_slowJobMessages.Select(c => c.Id).Distinct().Count, Is.EqualTo(messages));
          // 20s if messages are processed sequentially, 10 concurrent consumers reduces this to 2s
          Assert.That(duration, Is.LessThan(3000));
       }
-//
+
 //      [Test]
 //      public async Task foo()
 //      {

@@ -43,7 +43,7 @@ namespace Grouchy.ServiceBus.RabbitMQ.Tests
 
         protected override Task<IServiceBus> CreateServiceBus(IServiceProvider sp)
         {
-            return Task.FromResult<IServiceBus>(new RabbitMQServiceBus(_configuration, new DefaultQueueNameStrategy(), new DefaultSerialisationStrategy(), new DefaultMessageProcessor(new DefaultMessageHandlerFactory(sp))));
+            return Task.FromResult<IServiceBus>(new RabbitMQServiceBus(_configuration, new DefaultQueueNameStrategy(), new DefaultSerialisationStrategy(), new DefaultMessageProcessor(sp)));
         }
     }
 }

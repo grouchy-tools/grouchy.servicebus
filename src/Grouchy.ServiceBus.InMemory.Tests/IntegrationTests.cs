@@ -19,7 +19,7 @@ namespace Grouchy.ServiceBus.InMemory.Tests
 
         protected override Task<IServiceBus> CreateServiceBus(IServiceProvider sp)
         {
-            return Task.FromResult<IServiceBus>(new InMemoryServiceBus(_queues, new DefaultMessageProcessor(new DefaultMessageHandlerFactory(sp))));
+            return Task.FromResult<IServiceBus>(new InMemoryServiceBus(_queues, new DefaultMessageProcessor(sp)));
         }
     }
 }

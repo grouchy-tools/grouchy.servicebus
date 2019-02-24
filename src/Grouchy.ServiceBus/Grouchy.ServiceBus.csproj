@@ -19,5 +19,6 @@
   
   <ItemGroup>
     <PackageReference Include="Grouchy.ServiceBus.Abstractions" Version="0.0.1-preview0005" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
   </ItemGroup>
 </Project>

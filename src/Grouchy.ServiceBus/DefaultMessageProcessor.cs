@@ -1,28 +1,41 @@
 namespace Grouchy.ServiceBus
 {
+   using System;
    using System.Threading;
    using System.Threading.Tasks;
    using Grouchy.ServiceBus.Abstractions;
+   using Microsoft.Extensions.DependencyInjection;
 
    public class DefaultMessageProcessor : IMessageProcessor
    {
-      private readonly IMessageHandlerFactory _messageHandlerFactory;
+      private readonly IServiceProvider _serviceProvider;
 
-      public DefaultMessageProcessor(IMessageHandlerFactory messageHandlerFactory)
+      public DefaultMessageProcessor(IServiceProvider serviceProvider)
       {
-         _messageHandlerFactory = messageHandlerFactory;
+         _serviceProvider = serviceProvider;
       }
       
       public async Task ProcessAsync<TMessage>(TMessage message, CancellationToken cancellationToken)
          where TMessage : class
       {
-         // TODO: need to create scope before resolving messagehandler - maybe combine handler factory
+         // TODO: request id (rabbit correlation id??), correlation id (not rabbit correlation id??), session id, device id
          
-         // TODO: need to support disposable message handlers
-         var messageHandler = _messageHandlerFactory.Create<TMessage>();
+         // TODO: write metrics before, after and on exception
          
-         // TODO: Exception handler should dispose of handler 
-         await messageHandler.HandleAsync(message, cancellationToken);
+         // Create new scope for any resolutions of the handler or inside the handler
+         using (var scope = _serviceProvider.CreateScope())
+         {
+            var messageHandler = CreateHandlerFor<TMessage>(scope.ServiceProvider);
+         
+            await messageHandler.HandleAsync(message, cancellationToken);
+         }
+      }
+      
+      private static IMessageHandler<TMessage> CreateHandlerFor<TMessage>(IServiceProvider scope)
+         where TMessage : class
+      {
+         var messageHandler = (IMessageHandler<TMessage>)scope.GetService(typeof(IMessageHandler<TMessage>));
+         return messageHandler;
       }
    }
 }
